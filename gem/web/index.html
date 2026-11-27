@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gem — AI Coding Agent</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github-dark.min.css" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="brand">◆ Gem</div>
+      <div class="section">
+        <label for="projectDir">Project directory</label>
+        <input id="projectDir" type="text" value="." spellcheck="false" />
+        <label for="model">Model</label>
+        <input id="model" type="text" placeholder="anthropic/claude-3.5-sonnet" spellcheck="false" />
+        <label for="apiKey">API key <span class="hint">(blank = OPENROUTER_API_KEY env)</span></label>
+        <input id="apiKey" type="password" placeholder="sk-or-..." autocomplete="off" />
+        <label for="maxTurns">Max turns</label>
+        <input id="maxTurns" type="number" value="25" min="1" max="200" />
+        <label class="checkbox"><input id="stream" type="checkbox" checked /> stream responses</label>
+        <button id="startBtn" class="primary">Start session</button>
+        <button id="resetBtn" disabled>New chat</button>
+      </div>
+      <div id="sessionInfo" class="session-info hidden"></div>
+      <div class="section small">
+        The agent can read/edit files, grep, and run shell commands inside the project directory.
+      </div>
+    </aside>
+    <main id="main">
+      <div id="messages"></div>
+      <div id="composer">
+        <textarea id="input" rows="2" placeholder="Ask Gem to work on your project… (Enter to send, Shift+Enter for newline)" disabled></textarea>
+        <button id="sendBtn" class="primary" disabled>Send</button>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11/lib/common.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

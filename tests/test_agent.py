@@ -28,6 +28,13 @@ class FakeClient:
                 on_token(ch)
         return result
 
+    def iter_chat_stream(self, messages, model=None, tools=None, temperature=0.2):
+        result = self.chat(messages, model=model, tools=tools, temperature=temperature)
+        if result.content:
+            for ch in result.content:
+                yield "token", ch
+        yield "done", result
+
     def close(self):
         pass
 
