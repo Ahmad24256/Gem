@@ -117,11 +117,25 @@ def main(
     list_models: bool = typer.Option(
         False, "--list-models", help="List available OpenRouter models and exit."
     ),
+    serve: bool = typer.Option(
+        False, "--serve", help="Start the web UI (loopback only) instead of the terminal REPL."
+    ),
+    host: str = typer.Option("127.0.0.1", "--host", help="Host for --serve (default: loopback only)."),
+    port: int = typer.Option(8000, "--port", help="Port for --serve."),
     version: bool = typer.Option(False, "--version", help="Print version and exit."),
 ) -> None:
     if version:
         console.print(f"gem {__version__}")
         raise typer.Exit()
+
+    if serve:
+        from .server import run_server
+
+        console.print(
+            f"[bold]Gem web UI[/] at [cyan]http://{host}:{port}[/] (loopback only, Ctrl+C to stop)"
+        )
+        run_server(host=host, port=port)
+        return
 
     try:
         config = load_config(

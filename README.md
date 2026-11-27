@@ -1,10 +1,22 @@
 # Gem
 
-Gem is a terminal-based AI coding agent in Python. It converses with you, reads,
-creates, edits and deletes files inside a project folder you choose, searches the
-codebase (grep/glob), lists directories, and runs shell commands — all through a
-multi-step agent loop (think → act → observe → repeat) driven by an LLM on
-[OpenRouter](https://openrouter.ai) via its OpenAI-compatible API.
+Gem is an AI coding agent in Python with **both** a terminal CLI and a full web
+frontend. It converses with you, reads, creates, edits and deletes files inside a
+project folder you choose, searches the codebase (grep/glob), lists directories,
+and runs shell commands — all through a multi-step agent loop (think → act →
+observe → repeat) driven by an LLM on [OpenRouter](https://openrouter.ai) via its
+OpenAI-compatible API.
+
+## Preview
+
+**Terminal CLI** — tool calls, results, and Markdown answers in the terminal:
+
+![Gem terminal CLI preview](assets/preview-cli.png)
+
+**Web UI** (`gem --serve`) — live-streamed chat with tool-call blocks and
+syntax-highlighted code:
+
+![Gem web UI preview](assets/preview-web.png)
 
 ## Features
 
@@ -60,6 +72,22 @@ gem --version
 
 Inside the REPL: `/help`, `/clear` (reset conversation), `/exit` (quit).
 
+### Web UI
+
+```bash
+gem --serve --port 8000     # then open http://127.0.0.1:8000
+```
+
+The web UI (FastAPI + vanilla JS, served loopback-only) offers a chat page where you
+set the project directory, model, API key and max turns. Assistant tokens stream in
+live over SSE, tool calls and results render as collapsible blocks, and final
+answers are rendered as Markdown with syntax-highlighted code blocks.
+
+API: `POST /api/sessions` (create), `POST /api/sessions/{id}/chat` (SSE event
+stream: `token` / `tool_call` / `tool_result` / `status` / `final` / `error`),
+`GET /api/sessions/{id}/history`, `POST /api/sessions/{id}/reset`,
+`DELETE /api/sessions/{id}`, `GET /api/health`.
+
 You can also run it as a module: `python -m gem ...`
 
 ## CLI flags
@@ -73,15 +101,19 @@ You can also run it as a module: `python -m gem ...`
 | `--execute`, `-e` | Run one task non-interactively and exit | — |
 | `--no-stream` | Disable SSE streaming | off (streaming on) |
 | `--list-models` | List OpenRouter models and exit | — |
+| `--serve` | Start the web UI instead of the REPL | off |
+| `--host` / `--port` | Bind address for `--serve` | `127.0.0.1` / `8000` |
 
 ## Architecture
 
 ```
 gem/
-  cli.py          typer + rich CLI, REPL, one-shot mode
+  cli.py          typer + rich CLI, REPL, one-shot mode, --serve
   config.py       env/.env loading + precedence (CLI > env > .env > default)
   client.py       OpenRouter OpenAI-compatible client (httpx; stream + non-stream)
-  agent.py        the agent loop: think → tool call → observe → repeat
+  agent.py        agent loop as an event stream (shared by CLI and web UI)
+  server.py       FastAPI app: sessions + SSE chat endpoint + static web UI
+  web/            browser frontend (index.html, app.js, style.css)
   prompts.py      system prompt
   tools/
     base.py       Tool / ToolRegistry (schemas, dispatch, redaction, truncation)

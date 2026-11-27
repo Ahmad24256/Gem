@@ -146,17 +146,17 @@ class OpenRouterClient:
             raw=payload,
         )
 
-    def stream_chat(
+    def iter_chat_stream(
         self,
         messages: list[dict[str, Any]],
         model: str | None = None,
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.2,
-        on_token: Callable[[str], None] | None = None,
-    ) -> ChatResult:
+    ):
+        """Stream a chat completion, yielding ("token", text) events and finally
+        ("done", ChatResult) with the accumulated content and tool calls."""
         body = self._build_body(messages, model, tools, stream=True, temperature=temperature)
         content_parts: list[str] = []
-        tool_calls: list[ToolCall] = []
         pending: dict[int, dict[str, Any]] = {}
         model_seen: str | None = None
 
@@ -180,8 +180,7 @@ class OpenRouterClient:
                     token = delta.get("content")
                     if token:
                         content_parts.append(token)
-                        if on_token:
-                            on_token(token)
+                        yield "token", token
                     for raw_call in delta.get("tool_calls") or []:
                         index = raw_call.get("index", 0)
                         slot = pending.setdefault(
@@ -195,6 +194,7 @@ class OpenRouterClient:
                         if fn.get("arguments"):
                             slot["arguments"] += fn["arguments"]
 
+        tool_calls: list[ToolCall] = []
         for index in sorted(pending):
             slot = pending[index]
             try:
@@ -211,10 +211,31 @@ class OpenRouterClient:
                 )
             )
 
-        content = "".join(content_parts) or None
-        return ChatResult(
-            content=content, tool_calls=tool_calls, model=model_seen
+        yield "done", ChatResult(
+            content="".join(content_parts) or None,
+            tool_calls=tool_calls,
+            model=model_seen,
         )
+
+    def stream_chat(
+        self,
+        messages: list[dict[str, Any]],
+        model: str | None = None,
+        tools: list[dict[str, Any]] | None = None,
+        temperature: float = 0.2,
+        on_token: Callable[[str], None] | None = None,
+    ) -> ChatResult:
+        result: ChatResult | None = None
+        for kind, payload in self.iter_chat_stream(
+            messages, model=model, tools=tools, temperature=temperature
+        ):
+            if kind == "token":
+                if on_token:
+                    on_token(payload)
+            else:
+                result = payload
+        assert result is not None
+        return result
 
     def list_models(self) -> list[dict[str, Any]]:
         response = self._client.get("/models")
