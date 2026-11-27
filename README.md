@@ -7,6 +7,17 @@ and runs shell commands — all through a multi-step agent loop (think → act �
 observe → repeat) driven by an LLM on [OpenRouter](https://openrouter.ai) via its
 OpenAI-compatible API.
 
+## Preview
+
+**Terminal CLI** — tool calls, results, and Markdown answers in the terminal:
+
+![Gem terminal CLI preview](assets/preview-cli.png)
+
+**Web UI** (`gem --serve`) — live-streamed chat with tool-call blocks and
+syntax-highlighted code:
+
+![Gem web UI preview](assets/preview-web.png)
+
 ## Features
 
 - **Agent loop**: the model calls tools (OpenAI tool-calling format); each result is
